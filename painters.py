@@ -7,8 +7,8 @@ call is paid for and thrown away. Whatever comes back must decode as a real
 picture of a sensible size before it counts: providers answer errors with
 HTML or JSON and a 200 often enough.
 
-The provider quirks below were learned on the PHP original and are kept on
-purpose: kie.ai wants the Bearer header on the poll as well as the create
+The provider quirks below were learned on my earlier PHP version of this
+widget and are kept on purpose: kie.ai wants the Bearer header on the poll as well as the create
 and sizes with ``input.image_size`` (``aspect_ratio`` is silently ignored);
 Gemini needs ``imageSize`` next to ``aspectRatio`` or it sometimes paints a
 square; Pollinations needs a short prompt to keep its GET URL under

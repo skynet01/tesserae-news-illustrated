@@ -68,7 +68,7 @@ MAX_REDIRECTS = 5
 _REDIRECTS = frozenset({301, 302, 303, 307, 308})
 API_USER_AGENT = "tesserae/0.1 (+news_illustrated)"
 # Article pages and some feeds sit behind bot filters that refuse a
-# bot-shaped User-Agent outright (the PHP original learned this the hard way).
+# bot-shaped User-Agent outright (my earlier PHP version of this widget learned this the hard way).
 BROWSER_USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"

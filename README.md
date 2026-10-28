@@ -71,6 +71,12 @@ python -m pytest plugins/news_illustrated/tests
 No test touches the network. The browser tests need Playwright's Chromium and
 skip themselves without it; the client check needs `node`.
 
+## History
+
+This widget is a rewrite of the `ainews` module of my own earlier PHP app,
+[visionect-display-manager](https://github.com/skynet01/visionect-display-manager)
+(GPL-3.0, same author). Nothing from anyone else's project is in it.
+
 ## Licence
 
 AGPL-3.0, see [LICENSE](LICENSE).
