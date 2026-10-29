@@ -20,11 +20,12 @@ and moves to the next on each refresh.
   picture is drawn by the first image provider in your order that works: kie.ai,
   Gemini, Pollinations or HuggingFace. With no image key, stories are text only.
 - **Fits the screen.** On a short landscape screen (a 7.5-inch 800x480 e-paper,
-  640x384, 1024x600) the picture sits at the left, nearly the full height with a
-  small margin, and the headline and summary take the space beside it. With the
+  640x384, 1024x600) the picture sits at the left, about three quarters of the height, centred with
+  even padding round it, and the headline and summary take the space beside it. With the
   picture shape on Automatic, a small landscape frame gets portrait (3:4)
   pictures, which fill that space uncropped; a story drawn earlier in another
-  shape is cropped at the sides to fit (until Generate now redraws it). Taller
+  shape is cropped at the sides to fit (until Generate now redraws it). With the
+  summary off, the headline grows to fill the text area. Taller
   screens and big landscape frames keep the poster layout.
 - **A caption you can style:** which parts show (tag, date, count, headline,
   summary), its colours, and the summary and picture prompts.

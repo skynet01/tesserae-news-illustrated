@@ -30,10 +30,11 @@ function formatDate(iso, locale) {
 
 // A short landscape screen: 800x480, 640x384, 1024x600. The picture sits at
 // the left, SMALL_MARGIN percent of the height in from the top, bottom and left
-// edges, as wide as its own shape asks but never more than SMALL_ART_MAX of
-// the width (a wider picture is cropped at the sides to fit that box).
+// edges (so it is centred vertically, with even padding round it), as wide as
+// its own shape asks but never more than SMALL_ART_MAX of the width (a wider
+// picture is cropped at the sides to fit that box).
 export const SMALL_H = 600;
-export const SMALL_MARGIN = 2.5;
+export const SMALL_MARGIN = 12;
 export const SMALL_ART_MAX = 0.6;
 
 // Which layout a cell gets: ``wide`` puts the text beside the picture, and
@@ -75,6 +76,88 @@ export function summaryLines(w, h, wide, hasArt, titleChars = 60, artRatio = 9 /
   const heightInCqw = (100 * h) / w;
   const room = (hasArt ? 0.3 : 0.85) * heightInCqw - 26;
   return Math.max(0, Math.min(14, Math.floor(room / 3.4)));
+}
+
+// With no summary the headline takes the whole text area, as large as fits
+// (TITLE_MIN..TITLE_MAX_H of the height). The area is worked out in pixels
+// from the cell, like summaryLines; client-side the browser then measures the
+// real thing and settles on the exact size (fitTitle below).
+export const TITLE_MIN = 13;
+export const TITLE_MAX_H = 0.2;
+const TITLE_LINE = 1.12; // line-height, em
+const TITLE_CHAR = 0.54; // average bold glyph width, em
+const TITLE_WRAP = 1.06; // words wrap early: room lost at line ends
+
+// The text area's size in px and the height the source line takes of it.
+export function textArea(w, h, wide, hasArt, artRatio, hasMeta) {
+  let areaW;
+  let areaH;
+  let metaH = 0;
+  if (wide) {
+    const box = h <= SMALL_H ? smallArtBox(w, h, artRatio) : null;
+    const artW = box ? box.x + box.w : Math.min(h * artRatio, 0.55 * w);
+    const padL = box ? 0.06 * h : 0.05 * h;
+    areaW = w - artW - padL - 0.05 * h;
+    areaH = h - 0.12 * h;
+    if (hasMeta) metaH = clampPx(9, 0.026 * h, 22) * 1.6 + 0.022 * h;
+  } else {
+    areaW = w - 0.12 * w;
+    areaH = h - 0.12 * w;
+    if (hasMeta) metaH = clampPx(9, 0.015 * w, 24) * 1.6 + 0.011 * w;
+  }
+  return { w: Math.max(1, areaW), h: Math.max(1, areaH - metaH) };
+}
+
+// The largest headline size (px) whose lines fit the text area, for a title
+// of ``chars`` characters.
+export function titleSize(w, h, wide, hasArt, artRatio, chars, hasMeta) {
+  const area = textArea(w, h, wide, hasArt, artRatio, hasMeta);
+  const top = Math.max(TITLE_MIN, Math.min(TITLE_MAX_H * h, 0.2 * w, 200));
+  for (let f = Math.floor(top); f > TITLE_MIN; f -= 1) {
+    const lines = Math.max(1, Math.ceil((chars * TITLE_CHAR * TITLE_WRAP * f) / area.w));
+    if (lines * f * TITLE_LINE <= area.h) return f;
+  }
+  return TITLE_MIN;
+}
+
+// In the browser: settle the headline's size on what is measured, the
+// largest in TITLE_MIN..max whose text fits the room the caption leaves it
+// (the title is a flex child that takes what the source line does not). Sets
+// the size in cqh, so it keeps its proportions at any zoom.
+function fitTitle(root) {
+  const t = root.querySelector(".fit-title .title");
+  const box = root.querySelector(".ain");
+  if (!t || !box || !t.clientHeight || !box.clientHeight) return;
+  t.style.flex = "";
+  t.style.height = "";
+  const H = box.clientHeight;
+  const room = t.clientHeight;
+  const apply = (px) => {
+    box.style.setProperty("--title-fit", `${((100 * px) / H).toFixed(3)}cqh`);
+    box.style.setProperty("--fit-lines", "99");
+  };
+  let lo = TITLE_MIN;
+  let hi = Math.max(TITLE_MIN, Math.min(TITLE_MAX_H * H, 0.2 * box.clientWidth, 200));
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    apply(mid);
+    if (t.scrollHeight <= room + 1) lo = mid;
+    else hi = mid - 1;
+  }
+  apply(lo);
+  box.style.setProperty("--fit-lines", String(Math.max(1, Math.floor(room / (lo * TITLE_LINE)))));
+  // Words wrap in whole lines, so a little room is usually left over: shrink
+  // the title to its text, and the caption centres the source line and the
+  // headline together, the spare room above and below instead of all below.
+  if (t.scrollHeight <= room + 1) {
+    const range = document.createRange();
+    range.selectNodeContents(t);
+    const text = Math.ceil(range.getBoundingClientRect().height);
+    if (text > 0 && text < room) {
+      t.style.flex = "0 0 auto";
+      t.style.height = `${text}px`;
+    }
+  }
 }
 
 // The caption's look from the settings: colours as #rrggbb, parts shown.
@@ -137,13 +220,15 @@ const STYLE = `
   .is-wide .art img { object-position: center; }
   /* A short landscape screen: the picture at the left, filling the height
      bar a small margin, as wide as its shape asks (60% of the width at most;
-     a wider picture is cropped at the sides). */
+     a wider picture is cropped at the sides). Centred, so the padding is even. */
   .is-small .art {
-    align-self: start; margin: 2.5cqh 0 0 2.5cqh; height: 95cqh; aspect-ratio: auto; max-width: none;
-    width: min(calc(var(--art-ratio, 0.5625) * 95cqh), 60cqw);
+    align-self: start; margin: 12cqh 0 0 12cqh; height: 76cqh; aspect-ratio: auto; max-width: none;
+    width: min(calc(var(--art-ratio, 0.5625) * 76cqh), 60cqw);
   }
   .is-small .art img { object-fit: cover; }
-  .is-small .cap { padding: 4cqh 5cqh 4cqh 4cqh; }
+  .is-small .cap { padding: 6cqh 5cqh 6cqh 6cqh; }
+  /* No summary: the headline takes the whole text area, sized to fit it. */
+  .ain.fit-title .title { flex: 1 1 0; min-height: 0; font-size: var(--title-fit, 6cqh); -webkit-line-clamp: var(--fit-lines, 99); }
   .is-wide .cap {
     position: static; justify-content: center; gap: 2.2cqh;
     padding: 6cqh 5cqh; background: var(--ain-bg, #000);
@@ -231,16 +316,21 @@ export default function render(shadow, ctx) {
   const count = showSource && look.count && Number(data.count) > 1 ? `${data.index} / ${data.count}` : "";
   const showMeta = Boolean(tag || date || count);
   const hasCap = showMeta || showTitle || showSummary;
+  // With no summary the headline grows to fill the text area (beside the
+  // picture, or on a text poster); on a picture it stays a caption.
+  const fit = showTitle && !showSummary && size !== "xs" && (wide || !hasArt);
+  const fitPx = fit ? titleSize(w, h, wide, hasArt, artRatio, String(data.title || "").length, showMeta) : 0;
   const classes = [
     "w", "is-bleed", "ain", `size-${size}`,
     wide ? "is-wide" : "is-tall",
     small ? "is-small" : "",
+    fit ? "fit-title" : "",
     hasArt ? "" : "no-art",
     showSummary ? "" : "no-summary",
     hasCap || !hasArt ? "" : "no-cap",
   ].filter(Boolean).join(" ");
   const gradient = `linear-gradient(to top, ${rgba(look.bg, 0.95)} 0%, ${rgba(look.bg, 0.9)} 60%, ${rgba(look.bg, 0.55)} 85%, ${rgba(look.bg, 0)} 100%)`;
-  const vars = `--lines:${lines}; --ain-bg:${look.bg}; --ain-fg:${look.fg}; --ain-gradient:${gradient}; --art-ratio:${artRatio.toFixed(5)}`;
+  const vars = `--lines:${lines}; --ain-bg:${look.bg}; --ain-fg:${look.fg}; --ain-gradient:${gradient}; --art-ratio:${artRatio.toFixed(5)}${fit && h ? `; --title-fit:${((100 * fitPx) / h).toFixed(3)}cqh` : ""}`;
 
   shadow.innerHTML = `${head}
     <div class="${escapeHtml(classes)}" data-widget="news_illustrated" style="${escapeHtml(vars)}">
@@ -255,4 +345,10 @@ export default function render(shadow, ctx) {
         ${showSummary ? `<p class="summary">${escapeHtml(data.summary)}</p>` : ""}
       </div>
     </div>`;
+  if (fit) {
+    fitTitle(shadow);
+    // The page's fonts and styles may land after this: settle again then.
+    document.fonts?.ready?.then(() => fitTitle(shadow));
+    for (const link of shadow.querySelectorAll("link")) link.addEventListener("load", () => fitTitle(shadow));
+  }
 }
