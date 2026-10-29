@@ -205,14 +205,32 @@ def parse_order(raw: str) -> tuple[str, ...]:
     return tuple(dict.fromkeys(names)) or painters.PROVIDERS
 
 
+# A short landscape screen (a 7.5-inch 800x480, 640x384, 1024x600) shows the
+# picture at the left, nearly its full height, with the text beside it
+# (client.js, ``layoutFor``: the same test). A picture drawn in that box's own
+# shape fills it with nothing cropped and no bars, so "auto" draws portrait
+# for such a frame rather than the landscape of the screen itself.
+SMALL_LANDSCAPE_RATIO = 1.15
+SMALL_LANDSCAPE_MAX_H = 600
+SMALL_LANDSCAPE_ASPECT = "3:4"
+
+
+def is_small_landscape(width: int, height: int) -> bool:
+    """Whether a frame is a short landscape screen (the test client.js uses)."""
+    return width > height * SMALL_LANDSCAPE_RATIO and 0 < height <= SMALL_LANDSCAPE_MAX_H
+
+
 def pick_aspect(image_shape: str, frames: list[tuple[int, int]]) -> str:
     """The picture shape for a run: the setting, or with "auto" the shape of
-    the biggest frame showing the widget lately (9:16 before any has)."""
+    the biggest frame showing the widget lately (9:16 before any has); a short
+    landscape screen as the biggest gets portrait, the shape of its picture box."""
     if image_shape in painters.ASPECTS:
         return image_shape
     if not frames:
         return painters.DEFAULT_ASPECT
     width, height = max(frames, key=lambda wh: wh[0] * wh[1])
+    if is_small_landscape(width, height):
+        return SMALL_LANDSCAPE_ASPECT
     return painters.nearest_aspect(width, height)
 
 

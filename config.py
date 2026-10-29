@@ -152,7 +152,8 @@ FIELDS: tuple[dict[str, Any], ...] = (
             {"value": "16:9", "label": "Wide landscape (16:9)"},
         ],
         "help": "Automatic draws pictures the shape of the biggest frame that showed this "
-        "widget lately (9:16 until one has).",
+        "widget lately (9:16 until one has). A small landscape screen, such as 800x480, gets "
+        "portrait pictures (3:4), which fill its picture box with nothing cropped.",
     },
     {
         "name": "caption_bg",

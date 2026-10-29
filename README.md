@@ -21,8 +21,10 @@ and moves to the next on each refresh.
   Gemini, Pollinations or HuggingFace. With no image key, stories are text only.
 - **Fits the screen.** On a short landscape screen (a 7.5-inch 800x480 e-paper,
   640x384, 1024x600) the picture sits at the left, nearly the full height with a
-  small margin, and the headline and summary take the space beside it. A wide
-  picture is cropped at the sides to fit (at most 60% of the width). Taller
+  small margin, and the headline and summary take the space beside it. With the
+  picture shape on Automatic, a small landscape frame gets portrait (3:4)
+  pictures, which fill that space uncropped; a story drawn earlier in another
+  shape is cropped at the sides to fit (until Generate now redraws it). Taller
   screens and big landscape frames keep the poster layout.
 - **A caption you can style:** which parts show (tag, date, count, headline,
   summary), its colours, and the summary and picture prompts.

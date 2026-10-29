@@ -697,8 +697,29 @@ def test_the_picture_shape_follows_the_biggest_frame() -> None:
     assert pipeline.pick_aspect("auto", []) == "9:16"
     assert pipeline.pick_aspect("auto", [(800, 480), (1440, 2560)]) == "9:16"
     assert pipeline.pick_aspect("auto", [(800, 480), (1600, 1200)]) == "4:3"
-    assert pipeline.pick_aspect("auto", [(800, 480)]) == "16:9"
     assert pipeline.pick_aspect("1:1", [(1440, 2560)]) == "1:1"
+
+
+@pytest.mark.parametrize("frame", [(800, 480), (640, 384), (1024, 600)])
+def test_a_short_landscape_screen_gets_portrait_pictures(frame: tuple[int, int]) -> None:
+    # The picture sits at the left at nearly the full height, so it is drawn
+    # in that box's shape: nothing cropped, no bars.
+    assert pipeline.pick_aspect("auto", [frame]) == "3:4"
+    assert pipeline.pick_aspect("auto", [frame, (480, 300)]) == "3:4"
+    assert pipeline.pick_aspect("1:1", [frame]) == "1:1", "a chosen shape is kept"
+    # ... a bigger frame still decides when it is the biggest.
+    assert pipeline.pick_aspect("auto", [frame, (1920, 1080)]) == "16:9"
+    assert pipeline.pick_aspect("auto", [frame, (1440, 2560)]) == "9:16"
+
+
+def test_what_is_a_short_landscape_screen() -> None:
+    small = pipeline.is_small_landscape
+    assert small(800, 480) and small(1024, 600) and small(640, 384)
+    assert not small(1920, 1080) and not small(1280, 720) and not small(1600, 1200)
+    assert not small(480, 800) and not small(500, 480) and not small(0, 0)
+    # The shape drawn for it is the shape of the picture box client.js lays out.
+    w, h = painters.flux_size(pipeline.SMALL_LANDSCAPE_ASPECT)
+    assert w / h == pytest.approx(0.75, abs=0.02) and w < h
 
 
 def test_summaries_off_use_the_article_without_groq(fake_net: FakeNet, tmp_path: Path) -> None:
