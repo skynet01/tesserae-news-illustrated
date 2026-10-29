@@ -2,7 +2,10 @@
 // illustration fills the cell (contained, so speech bubbles at the edges
 // survive), with the headline and summary over a gradient at the foot. A wide
 // cell showing a tall picture puts the text beside it instead, since a
-// caption over the bottom of a short picture would hide most of it.
+// caption over the bottom of a short picture would hide most of it. On a short
+// landscape screen (a 7.5-inch 800x480 e-paper) the picture is always put at
+// the left, filling almost the full height, with the text in the space that
+// is left, whatever shape the picture is.
 // Everything sizes from the cell, so a full 1440x2560 portrait panel and a
 // small tile read the same way. The caption's colours and parts come from the
 // widget's settings (data.look). The widget's page draws its previews with
@@ -25,6 +28,28 @@ function formatDate(iso, locale) {
   }
 }
 
+// A short landscape screen: 800x480, 640x384, 1024x600. The picture sits at
+// the left, SMALL_MARGIN percent of the height in from the top, bottom and left
+// edges, as wide as its own shape asks but never more than SMALL_ART_MAX of
+// the width (a wider picture is cropped at the sides to fit that box).
+export const SMALL_H = 600;
+export const SMALL_MARGIN = 2.5;
+export const SMALL_ART_MAX = 0.6;
+
+// Which layout a cell gets: ``wide`` puts the text beside the picture, and
+// ``small`` is the short landscape screen's version of that.
+export function layoutFor(w, h, hasArt, artRatio) {
+  const landscape = Boolean(hasArt) && w > h * 1.15;
+  const small = landscape && h <= SMALL_H;
+  return { wide: landscape && (small || artRatio < 1), small };
+}
+
+// The picture's box on a short landscape screen, in pixels.
+export function smallArtBox(w, h, artRatio) {
+  const boxH = h * (1 - (2 * SMALL_MARGIN) / 100);
+  return { x: (h * SMALL_MARGIN) / 100, y: (h * SMALL_MARGIN) / 100, w: Math.min(boxH * artRatio, SMALL_ART_MAX * w), h: boxH };
+}
+
 // Summary lines that fit the caption, worked out in the units the type is set
 // in (cqw when tall, cqh when wide) so the answer holds at any cell size or zoom.
 const clampPx = (low, value, high) => Math.max(low, Math.min(high, value));
@@ -36,7 +61,9 @@ export function summaryLines(w, h, wide, hasArt, titleChars = 60, artRatio = 9 /
     // (up to four lines) and the source line are set, in summary lines, so
     // a short landscape screen gets a shorter summary rather than one cut
     // off at the foot.
-    const artW = hasArt ? Math.min(h * artRatio, 0.55 * w) : 0;
+    const small = hasArt && h <= SMALL_H;
+    const box = small ? smallArtBox(w, h, artRatio) : null;
+    const artW = !hasArt ? 0 : box ? box.x + box.w : Math.min(h * artRatio, 0.55 * w);
     const textW = Math.max(1, w - artW - 0.1 * h);
     const titleFont = clampPx(13, 0.06 * h, 64);
     const titleLines = Math.min(4, Math.ceil((titleChars * 0.62 * titleFont) / textW));
@@ -108,6 +135,15 @@ const STYLE = `
   .is-wide { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: minmax(0, 100%); }
   .is-wide .art { position: relative; inset: auto; height: 100%; width: auto; aspect-ratio: var(--art-ratio, 9 / 16); max-width: 55cqw; min-height: 0; }
   .is-wide .art img { object-position: center; }
+  /* A short landscape screen: the picture at the left, filling the height
+     bar a small margin, as wide as its shape asks (60% of the width at most;
+     a wider picture is cropped at the sides). */
+  .is-small .art {
+    align-self: start; margin: 2.5cqh 0 0 2.5cqh; height: 95cqh; aspect-ratio: auto; max-width: none;
+    width: min(calc(var(--art-ratio, 0.5625) * 95cqh), 60cqw);
+  }
+  .is-small .art img { object-fit: cover; }
+  .is-small .cap { padding: 4cqh 5cqh 4cqh 4cqh; }
   .is-wide .cap {
     position: static; justify-content: center; gap: 2.2cqh;
     padding: 6cqh 5cqh; background: var(--ain-bg, #000);
@@ -182,9 +218,10 @@ export default function render(shadow, ctx) {
   const imgW = Number(data.image_w) || 0;
   const imgH = Number(data.image_h) || 0;
   const artRatio = imgW > 0 && imgH > 0 ? imgW / imgH : 9 / 16;
-  // Side by side only when a tall picture would sit small in a wide cell;
-  // a wide picture on a wide frame is a poster like any other.
-  const wide = hasArt && w > h * 1.15 && artRatio < 1;
+  // Side by side when a tall picture would sit small in a wide cell, or on
+  // any short landscape screen; a wide picture on a big wide frame is a
+  // poster like any other.
+  const { wide, small } = layoutFor(w, h, hasArt, artRatio);
   const showTitle = look.title;
   const lines = summaryLines(w, h, wide, hasArt, showTitle ? String(data.title || "").length : 0, artRatio);
   const showSummary = opts.show_summary !== false && look.summary && data.summary && lines >= 2;
@@ -197,6 +234,7 @@ export default function render(shadow, ctx) {
   const classes = [
     "w", "is-bleed", "ain", `size-${size}`,
     wide ? "is-wide" : "is-tall",
+    small ? "is-small" : "",
     hasArt ? "" : "no-art",
     showSummary ? "" : "no-summary",
     hasCap || !hasArt ? "" : "no-cap",

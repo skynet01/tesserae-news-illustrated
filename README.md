@@ -19,6 +19,11 @@ and moves to the next on each refresh.
   article; without a Groq key a story shows the article's opening words. The
   picture is drawn by the first image provider in your order that works: kie.ai,
   Gemini, Pollinations or HuggingFace. With no image key, stories are text only.
+- **Fits the screen.** On a short landscape screen (a 7.5-inch 800x480 e-paper,
+  640x384, 1024x600) the picture sits at the left, nearly the full height with a
+  small margin, and the headline and summary take the space beside it. A wide
+  picture is cropped at the sides to fit (at most 60% of the width). Taller
+  screens and big landscape frames keep the poster layout.
 - **A caption you can style:** which parts show (tag, date, count, headline,
   summary), its colours, and the summary and picture prompts.
 
