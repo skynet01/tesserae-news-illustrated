@@ -2,5 +2,15 @@
   "widget_title": "AI Illustrated News",
   "making": "Making today's stories…",
   "no_stories": "No stories yet",
-  "no_stories_detail": "Stories are made once a day after {time}, or now with Generate now on the widget's page."
+  "no_stories_detail": "Stories are made once a day after {time}, or now with Generate now on the widget's page.",
+  "settings.sources.placeholder": "World | https://feeds.bbci.co.uk/news/world/rss.xml",
+  "settings.run_at.placeholder": "06:05",
+  "settings.summary_words.placeholder": "60",
+  "settings.groq_model.placeholder": "openai/gpt-oss-120b",
+  "settings.kie_model.placeholder": "google/nano-banana",
+  "settings.gemini_model.placeholder": "gemini-2.5-flash-image",
+  "settings.pollinations_model.placeholder": "flux",
+  "settings.huggingface_model.placeholder": "black-forest-labs/FLUX.1-schnell",
+  "settings.summary_prompt.placeholder": "Summarize this story in about {words} words using plain language.",
+  "settings.image_prompt.placeholder": "Draw an ink cartoon about {title}. Story: {summary}. Shape: {shape}."
 }

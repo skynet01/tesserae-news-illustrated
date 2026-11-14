@@ -43,6 +43,7 @@ SUMMARY_PROMPT = (
 FIELDS: tuple[dict[str, Any], ...] = (
     {
         "name": "sources",
+        "placeholder": "World | https://feeds.bbci.co.uk/news/world/rss.xml",
         "type": "textarea",
         "label": "Sources",
         "rows": 4,
@@ -52,15 +53,17 @@ FIELDS: tuple[dict[str, Any], ...] = (
     },
     {
         "name": "run_at",
+        "placeholder": "06:05",
         "type": "time",
         "label": "Time to make today's stories",
         "default": pipeline.DEFAULT_RUN_AT,
-        "help": "In the server's time zone. The stories are made at the first frame update "
+        "help": "24-hour time as HH:MM, in the server's time zone. The stories are made at the first frame update "
         "after this time. For an exact time, turn on the placement's daily refresh at the "
         "same time.",
     },
     {
         "name": "summary_words",
+        "placeholder": "60",
         "type": "number",
         "label": "Summary length (words)",
         "default": pipeline.DEFAULT_WORDS,
@@ -82,12 +85,14 @@ FIELDS: tuple[dict[str, Any], ...] = (
     },
     {
         "name": "groq_model",
+        "placeholder": "openai/gpt-oss-120b",
         "type": "string",
         "label": "Groq model",
         "default": "openai/gpt-oss-120b",
     },
     {
         "name": "summary_prompt",
+        "placeholder": "Summarize this story in about {words} words using plain language.",
         "type": "textarea",
         "label": "Summary prompt",
         "rows": 3,
@@ -104,30 +109,35 @@ FIELDS: tuple[dict[str, Any], ...] = (
     },
     {
         "name": "kie_model",
+        "placeholder": "google/nano-banana",
         "type": "string",
         "label": "kie.ai model",
         "default": "google/nano-banana",
     },
     {
         "name": "gemini_model",
+        "placeholder": "gemini-2.5-flash-image",
         "type": "string",
         "label": "Gemini model",
         "default": "gemini-2.5-flash-image",
     },
     {
         "name": "pollinations_model",
+        "placeholder": "flux",
         "type": "string",
         "label": "Pollinations model",
         "default": "flux",
     },
     {
         "name": "huggingface_model",
+        "placeholder": "black-forest-labs/FLUX.1-schnell",
         "type": "string",
         "label": "HuggingFace model",
         "default": "black-forest-labs/FLUX.1-schnell",
     },
     {
         "name": "image_prompt",
+        "placeholder": "Draw an ink cartoon about {title}. Story: {summary}. Shape: {shape}.",
         "type": "textarea",
         "label": "Illustration prompt",
         "rows": 10,

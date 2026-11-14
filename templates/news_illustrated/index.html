@@ -20,7 +20,7 @@
   {%- set fid = 'ain-' ~ name -%}
   <div class="field ain-prompt">
     <label for="{{ fid }}">{{ spec.label }}{{ info_pop(spec.help) }}<button type="button" class="ain-reset" data-ain-reset="{{ fid }}" title="Reset to the default prompt" aria-label="Reset {{ spec.label }} to the default"><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i></button></label>
-    <textarea id="{{ fid }}" name="{{ name }}" rows="{{ rows }}" data-default="{{ spec.default }}">{{ values[name] }}</textarea>
+    <textarea id="{{ fid }}" name="{{ name }}" rows="{{ rows }}" placeholder="{{ spec.placeholder }}" data-default="{{ spec.default }}">{{ values[name] }}</textarea>
   </div>
 {%- endmacro %}
 

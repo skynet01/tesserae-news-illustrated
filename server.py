@@ -377,7 +377,10 @@ def link_help(service: str, what: str) -> Markup:
     links = SERVICE_LINKS[service]
     name = pipeline.PROVIDER_NAMES[service]
     if what == "models":
-        text = escape(links["note"]) + Markup(" ")
+        text = escape(
+            links["note"]
+            + " Copy the exact model ID, including capitals, hyphens and any provider/ prefix; use plain text."
+        ) + Markup(" ")
         label = f"{name}'s model list"
     else:
         text = Markup("")
