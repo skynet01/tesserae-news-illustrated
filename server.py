@@ -91,11 +91,13 @@ def fetch(
     """The story this placement shows now. Never makes stories itself.
 
     ``story`` pins the cell to one feed's story (the Lineups page picks it from
-    ``lineup_items``); a pinned cell never moves the rotation."""
+    ``lineup_items``); a pinned cell never moves the rotation. ``_browse`` (not
+    a manifest option) shows the story that many places past the current one
+    and moves nothing."""
     if not net.HOST_OK:
         return {"error": f"This widget needs Tesserae {net.NEEDS_TESSERAE} or newer."}
     data_dir = Path(ctx["data_dir"])
-    values = config.load(data_dir)
+    values = config.load(data_dir, _legacy_settings)
     cfg = pipeline.Config.from_settings(merged(values, settings))
     if not cfg.sources:
         return {"error": "Add a feed under Sources in this widget's settings."}
@@ -138,6 +140,8 @@ def fetch(
         index = pinned
     else:
         index = store.pick(data_dir, placement, len(stories), advance=not preview, now=time.time())
+    with contextlib.suppress(TypeError, ValueError):
+        index = (index + max(0, int(options.get("_browse") or 0))) % len(stories)
     out.update(story_data(data_dir, stories[index], index, len(stories)))
     return out
 
@@ -243,7 +247,7 @@ def blueprint() -> Blueprint:
     @bp.get("/")
     def index() -> str:
         data_dir = _data_dir()
-        values = config.load(data_dir)
+        values = config.load(data_dir, _legacy_settings)
         keys = _keys()
         cfg = pipeline.Config.from_settings(merged(values, keys))
         tz = _timezone()
@@ -281,7 +285,7 @@ def blueprint() -> Blueprint:
     @bp.post("/settings")
     def save_settings() -> Response:
         data_dir = _data_dir()
-        current = config.load(data_dir)
+        current = config.load(data_dir, _legacy_settings)
         values, problems = config.from_form(request.form, current)
         if problems:
             flash("Settings not saved: " + "; ".join(problems) + ".", "error")
@@ -308,7 +312,7 @@ def blueprint() -> Blueprint:
     @bp.post("/run")
     def run_now() -> Response:
         data_dir = _data_dir()
-        values = config.load(data_dir)
+        values = config.load(data_dir, _legacy_settings)
         cfg = pipeline.Config.from_settings(merged(values, _keys()))
         if not cfg.sources:
             flash("Add a feed under Sources in this widget's settings first.", "warn")
@@ -481,6 +485,19 @@ def _unreadable_keys() -> set[str]:
     except Exception:
         return set()
     return {str(disk).removesuffix("_secret") for disk in got}
+
+
+def _legacy_settings() -> dict[str, Any] | None:
+    """The page's settings as saved when they were manifest settings (in
+    settings.json under plugins > news_illustrated), for config.load to copy
+    once. None when there is no settings store to ask."""
+    settings_store = _settings_store()
+    if settings_store is None:
+        return None
+    got: dict[str, Any] = settings_store.get_for_runtime(
+        "plugins", PLUGIN_ID, list(config.LEGACY_FIELDS)
+    )
+    return got
 
 
 KEY_STATES = {

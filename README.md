@@ -49,14 +49,13 @@ widget's data folder.
 A provider without a key is skipped. Cell options: show the summary,
 show the source and date.
 
-## Needs Tesserae 0.484.1 or newer
+## Needs Tesserae 0.512.0 or newer
 
 Every request goes through the host's `app.net_guard.guarded_opener`, which
 connects only to public addresses (feed links come from the open web, so they
-can't be trusted to stay off your LAN). That helper is on Tesserae `main` and
-ships in the next release; `plugin.json` sets `tesserae_min` to 0.484.1. On an
-older host that doesn't read `tesserae_min`, the widget loads, shows "This widget
-needs Tesserae 0.484.1 or newer", and makes no requests.
+can't be trusted to stay off your LAN). The manifest sets `tesserae_min` to
+0.512.0 because the Lineups story label uses `lineups.noun`, which older
+manifest schemas reject.
 
 ## Network and host helpers
 

@@ -11,13 +11,19 @@ and kept here, as plugins/todo keeps its lists in ``lists.json``.
   atomically (temp file and rename) under a lock.
 * :func:`from_form` turns the page's form into values, saying in words what
   is wrong with any it refuses.
+
+These settings used to be manifest settings, so an install that had
+them keeps them in settings.json under ``plugins`` > ``news_illustrated``.
+The first :func:`load` without a ``config.json`` copies them from there
+(``legacy``, see server.py) and writes the file; the old values stay in
+settings.json, untouched, so going back to the old version finds them.
 """
 
 from __future__ import annotations
 
 import re
 import threading
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -181,6 +187,11 @@ FIELDS: tuple[dict[str, Any], ...] = (
 )
 FIELD: dict[str, dict[str, Any]] = {str(f["name"]): f for f in FIELDS}
 
+# The same settings as they were stored when they were manifest settings,
+# for SettingsStore.get_for_runtime: no defaults, so only saved values come
+# back, and none is secret.
+LEGACY_FIELDS: tuple[dict[str, Any], ...] = tuple({"name": f["name"]} for f in FIELDS)
+
 _TIME = re.compile(r"\s*(\d{1,2}):(\d{2})(?::\d{2})?\s*")
 _COLOUR = re.compile(r"#[0-9a-fA-F]{6}")
 _LOCK = threading.Lock()
@@ -273,15 +284,27 @@ def _path(data_dir: Path) -> Path:
     return Path(data_dir) / CONFIG
 
 
-def load(data_dir: Path) -> dict[str, Any]:
-    """The settings, over the defaults. Without a ``config.json`` these are
-    the defaults, and nothing is written."""
+def load(
+    data_dir: Path, legacy: Callable[[], Mapping[str, Any] | None] | None = None
+) -> dict[str, Any]:
+    """The settings, over the defaults. Without a ``config.json`` the values
+    ``legacy()`` returns (the settings store's, from before they moved here)
+    are copied into a new one; when it has none to give (``None``: no store
+    to ask), the defaults are returned and nothing is written."""
     with _LOCK:
         path = _path(data_dir)
-        if not path.exists():
+        if path.exists():
+            got = store.read_json(path, {})
+            return {**defaults(), **clean(got if isinstance(got, dict) else {})}
+        try:
+            old = legacy() if legacy is not None else None
+        except Exception:
+            old = None
+        if old is None:
             return defaults()
-        got = store.read_json(path, {})
-        return {**defaults(), **clean(got if isinstance(got, dict) else {})}
+        values = {**defaults(), **clean(old)}
+        store.write_json(path, values)
+        return values
 
 
 def save(data_dir: Path, values: Mapping[str, Any]) -> dict[str, Any]:

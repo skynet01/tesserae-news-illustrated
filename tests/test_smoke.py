@@ -16,6 +16,7 @@ from typing import Any
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
+
 from plugins.news_illustrated.tests.fakes import picture
 
 PLUGIN = "news_illustrated"
@@ -144,6 +145,19 @@ def test_pushes_rotate_through_the_stories(
         "",
     )
     assert preview["index"] == 2
+    assert starts == []
+
+
+def test_browsing_shows_another_story_without_moving_the_cursor(
+    app: Flask, mod: ModuleType, data_dir: Path, starts: list[Any]
+) -> None:
+    _seed(mod, data_dir)
+    with app.app_context():
+        first = mod.fetch({}, {}, ctx=_ctx(data_dir, preview=False, settled=True))
+        cursor = (data_dir / "cursor.json").read_text()
+        browsed = mod.fetch({"_browse": 1}, {}, ctx=_ctx(data_dir, preview=True, settled=False))
+    assert (first["index"], browsed["index"]) == (1, 2)
+    assert (data_dir / "cursor.json").read_text() == cursor
     assert starts == []
 
 

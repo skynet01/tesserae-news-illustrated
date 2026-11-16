@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
+
 from plugins.news_illustrated import config
 
 PLUGIN = "news_illustrated"
@@ -218,14 +219,97 @@ def test_save_is_atomic_and_checks_first(tmp_path: Path) -> None:
     assert [p.name for p in tmp_path.iterdir()] == ["config.json"], "no temp file left"
 
 
-def test_a_saved_value_that_no_longer_fits_is_the_default(tmp_path: Path) -> None:
-    (tmp_path / "config.json").write_text(
-        json.dumps(
-            {"summary_words": 5000, "image_shape": "7:2", "caption_fg": "white", "run_at": "6:05"}
-        ),
-        encoding="utf-8",
+# Alex's settings.json before the move: the page's settings among the keys.
+LEGACY = {
+    "sources": "Tech | https://hnrss.org/frontpage?points=100\nLocal | https://example.test/rss",
+    "run_at": "06:30",
+    "summary_words": 55,
+    "summary_service": "groq",
+    "groq_model": "openai/gpt-oss-20b",
+    "summary_prompt": "Tell it like a pirate, in {words} words.",
+    "provider_order": "gemini, kie",
+    "kie_model": "google/nano-banana-pro",
+    "image_prompt": "My own cartoon prompt about {title}: {summary}. {shape}.",
+    "image_shape": "3:4",
+    "caption_bg": "#112233",
+    "caption_fg": "#fafafa",
+    "show_tag": True,
+    "show_date": False,
+    "show_count": False,
+    "show_headline": True,
+    "show_summary": True,
+}
+
+
+def _legacy_install(app: Flask) -> None:
+    """Write the old settings straight into settings.json's section, as the
+    old version saved them (secrets as ``<name>_secret``)."""
+    store = app.config["SETTINGS_STORE"]
+    _set_keys(app, groq_api_key="gsk-live", kie_api_key="kie-live")
+    old_fields = [{"name": name} for name in LEGACY]
+    store.update_for_namespace("plugins", PLUGIN, dict(LEGACY), old_fields)
+
+
+def test_the_first_read_copies_the_old_settings_into_config_json(
+    app: Flask, client: FlaskClient
+) -> None:
+    _legacy_install(app)
+    store = app.config["SETTINGS_STORE"]
+    before = json.loads(json.dumps(store.raw_section("plugins")[PLUGIN]))
+    assert not (_data_dir(app) / "config.json").exists()
+    body = client.get(PAGE).get_data(as_text=True)
+    saved = _config(app)
+    assert {name: saved[name] for name in LEGACY} == LEGACY
+    # His own prompts survive, and are what the page shows.
+    assert saved["summary_prompt"] == "Tell it like a pirate, in {words} words."
+    assert "My own cartoon prompt about {title}" in body
+    # Unsaved settings get today's defaults.
+    assert saved["gemini_model"] == "gemini-2.5-flash-image"
+    # settings.json is untouched: old values in place for a rollback, the
+    # keys where they were and still encrypted.
+    after = store.raw_section("plugins")[PLUGIN]
+    assert after == before
+    assert after["summary_prompt"] == LEGACY["summary_prompt"]
+    assert "groq_api_key_secret" in after and after["groq_api_key_secret"] != "gsk-live"
+    assert not any(isinstance(v, str) and "gsk-live" in v for v in saved.values())
+
+
+def test_the_copy_happens_once(app: Flask, client: FlaskClient) -> None:
+    _legacy_install(app)
+    client.get(PAGE)
+    client.post(f"{PAGE}settings", data=_form(run_at="10:10"))
+    # A later change to the old values (a rollback and back) is not copied again.
+    app.config["SETTINGS_STORE"].update_for_namespace(
+        "plugins", PLUGIN, {"run_at": "11:11"}, [{"name": "run_at"}]
     )
-    saved = config.load(tmp_path)
+    client.get(PAGE)
+    assert _config(app)["run_at"] == "10:10"
+
+
+def test_a_render_migrates_too_and_uses_the_old_values(app: Flask) -> None:
+    _legacy_install(app)
+    mod = app.config["PLUGIN_REGISTRY"].get(PLUGIN).server_module
+    plugin = app.config["PLUGIN_REGISTRY"].get(PLUGIN)
+    keys = app.config["SETTINGS_STORE"].get_for_runtime(
+        "plugins", PLUGIN, plugin.manifest["settings"]
+    )
+    ctx = {"data_dir": str(_data_dir(app)), "preview": True, "settled": False, "cell_id": "c1"}
+    with app.app_context():
+        out = mod.fetch({}, keys, ctx=ctx)
+    assert out["run_at"] == "06:30"
+    assert out["look"]["bg"] == "#112233" and out["look"]["date"] is False
+    assert _config(app)["image_prompt"] == LEGACY["image_prompt"]
+
+
+def test_an_old_value_that_no_longer_fits_is_the_default(app: Flask, client: FlaskClient) -> None:
+    app.config["SETTINGS_STORE"].update_for_namespace(
+        "plugins",
+        PLUGIN,
+        {"summary_words": 5000, "image_shape": "7:2", "caption_fg": "white", "run_at": "6:05"},
+        [{"name": n} for n in ("summary_words", "image_shape", "caption_fg", "run_at")],
+    )
+    client.get(PAGE)
+    saved = _config(app)
     assert (saved["summary_words"], saved["image_shape"], saved["caption_fg"]) == (
         70,
         "auto",
