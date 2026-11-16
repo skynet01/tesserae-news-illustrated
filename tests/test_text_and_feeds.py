@@ -4,7 +4,6 @@ article fetch with its paywall fallback."""
 from __future__ import annotations
 
 import pytest
-
 from plugins.news_illustrated import feeds, net, text
 from plugins.news_illustrated.tests.fakes import FakeNet, article_page, ok, rss
 

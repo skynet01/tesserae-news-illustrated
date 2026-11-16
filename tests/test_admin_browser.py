@@ -14,9 +14,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from flask import Flask
-
 from app.main import create_app
+from flask import Flask
 from plugins.news_illustrated.tests.fakes import picture
 
 PLUGIN = "news_illustrated"

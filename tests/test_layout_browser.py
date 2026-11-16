@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-
 from plugins.news_illustrated.tests.fakes import picture
 
 PLUGIN_DIR = Path(__file__).resolve().parent.parent

@@ -13,7 +13,6 @@ import zlib
 from typing import Any
 
 import pytest
-
 from app.net_guard import BlockedURLError
 from plugins.news_illustrated import net
 

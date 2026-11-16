@@ -12,9 +12,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from flask import Flask
-
 from app.main import create_app
+from flask import Flask
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 

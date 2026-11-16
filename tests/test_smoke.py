@@ -333,7 +333,7 @@ def test_admin_page_draws_the_redesigned_settings(
         data_dir, {"sources": "Tech | https://a.example/rss\nBroken | feed.example/rss"}
     )
     html = client.get(f"/plugins/{PLUGIN}/").get_data(as_text=True)
-    assert "<h1>" in html and "AI Illustrated News</h1>" in html
+    assert "<h1>" in html and "News, AI Illustrated</h1>" in html
     assert "Time to make today&#39;s stories" in html
     for needle in (
         'name="summary_service" value="groq"',

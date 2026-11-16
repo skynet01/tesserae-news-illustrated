@@ -11,7 +11,6 @@ from types import ModuleType
 from typing import Any
 
 import pytest
-
 from plugins.news_illustrated import net
 
 

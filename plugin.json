@@ -1,7 +1,7 @@
 {
   "tesserae_compat": "1.x",
   "tesserae_min": "0.484.1",
-  "name": "AI Illustrated News",
+  "name": "News, AI Illustrated",
   "version": "0.2.0",
   "kind": "widget",
   "locales": [

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from plugins.news_illustrated import net
 from plugins.news_illustrated.tests.fakes import FakeNet, install
 

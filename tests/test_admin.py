@@ -11,7 +11,6 @@ from typing import Any
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-
 from plugins.news_illustrated import config
 
 PLUGIN = "news_illustrated"

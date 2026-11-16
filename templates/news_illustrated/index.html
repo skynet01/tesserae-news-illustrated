@@ -1,6 +1,6 @@
 {% extends "_base.html" %}
 {% from "_components.html" import auto_field, button, empty_state, info_pop, section_card with context %}
-{% block title %}AI Illustrated News, Tesserae{% endblock %}
+{% block title %}News, AI Illustrated, Tesserae{% endblock %}
 {% block head_extra %}
 <script src="{{ url_for('static', filename='pages/settings.js') }}" defer></script>
 <script type="module" src="{{ url_for('news_illustrated_admin.admin_js') }}"></script>
@@ -39,7 +39,7 @@
 
 {% block main %}
 <div class="page-head">
-  <h1><i class="ph ph-newspaper-clipping" aria-hidden="true"></i> AI Illustrated News</h1>
+  <h1><i class="ph ph-newspaper-clipping" aria-hidden="true"></i> News, AI Illustrated</h1>
   <p class="lede">Each day, the top story from each of your feeds, summarised and drawn as an ink cartoon. Frames show one story at a time and move to the next on each refresh.</p>
 </div>
 
@@ -236,7 +236,7 @@
   {% if previews %}<p class="field-help">The stories above follow these as you change them; save to use them on the frame.</p>{% endif %}
 {% endcall %}
 
-  <div class="dx-save-bar dx-save-bar--server" data-save-bar hidden>
+  <div class="dx-save-bar dx-save-bar--server dx-save-bar--page" data-save-bar hidden>
     <span class="dx-save-bar-msg">You have unsaved changes</span>
     <div class="dx-save-bar-actions">
       <button type="reset" class="dx-save-bar-discard">Discard</button>

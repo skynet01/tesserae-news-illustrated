@@ -1,4 +1,4 @@
-# AI Illustrated News
+# News, AI Illustrated
 
 Once a day, the top story of each of your feeds, summarised by an AI and drawn
 as a satirical ink cartoon. The cell shows one story at a time, poster style,
@@ -9,7 +9,7 @@ and moves to the next on each refresh.
 ## What it does
 
 - **Feeds in, stories out.** Add RSS or Atom feeds on the widget's page
-  (Widgets, AI Illustrated News), one per line as `Label | feed address`. Each
+  (Widgets, News, AI Illustrated), one per line as `Label | feed address`. Each
   feed gives one story a day: its newest.
 - **Made in the background.** The day's stories are made on a worker thread at
   the first frame update after the time you choose (06:05 by default), with

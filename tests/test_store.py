@@ -10,7 +10,6 @@ import time
 from pathlib import Path
 
 import pytest
-
 from plugins.news_illustrated import store
 
 T0 = 1_800_000_000.0
